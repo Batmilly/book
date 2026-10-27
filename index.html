@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>O lugar onde eu nunca parti — Agatha Mille</title>
+  
+  <!-- Fontes Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'bg-dark': '#0d0205',
+            'wine-primary': '#2b060d',
+            'wine-accent': '#590a19',
+            'wine-glow': '#9e1b32',
+            'gold-accent': '#d4af37',
+            'gold-light': '#f3e5ab',
+            'text-soft': '#e2d3d6',
+            'text-muted': '#a38c92',
+          },
+          fontFamily: {
+            cinzel: ['Cinzel', 'serif'],
+            montserrat: ['Montserrat', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0d0205;
+      color: #ffffff;
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(89, 10, 25, 0.45) 0%, transparent 70%),
+        radial-gradient(circle at 85% 90%, rgba(158, 27, 50, 0.25) 0%, transparent 60%);
+    }
+
+    /* Partículas de Brasa / Fogo */
+    #ember-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Estilização 3D da Capa do Livro */
+    .book-3d-wrapper {
+      perspective: 1200px;
+    }
+
+    .book-cover-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+      box-shadow: 
+        -15px 20px 40px rgba(0, 0, 0, 0.9),
+        0 0 35px rgba(158, 27, 50, 0.4);
+    }
+
+    .book-cover-3d:hover {
+      transform: rotateY(-12deg) rotateX(8deg) translateY(-10px) scale(1.02);
+      box-shadow: 
+        -25px 30px 60px rgba(0, 0, 0, 0.95),
+        0 0 50px rgba(212, 175, 55, 0.3);
+    }
+
+    .book-spine {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 25px;
+      height: 100%;
+      background: linear-gradient(90deg, #1b0205, #3d0711);
+      transform: rotateY(-90deg) translateX(-12.5px);
+      transform-origin: left;
+    }
+
+    /* Modal de Alerta Customizado (Substitui o alert nativo) */
+    .custom-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 2, 5, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .custom-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: linear-gradient(145deg, #2b060d, #140307);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.9), 0 0 30px rgba(158,27,50,0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .custom-modal.active .modal-content {
+      transform: scale(1);
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d0205;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #590a19;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #9e1b32;
+    }
+  </style>
+</head>
+<body class="relative min-h-screen flex flex-col justify-between selection:bg-rose-900 selection:text-white">
+
+  <!-- Canvas para animação de brasas -->
+  <canvas id="ember-canvas"></canvas>
+
+  <!-- MODAL CUSTOMIZADO (Substitui alert) -->
+  <div id="customModal" class="custom-modal">
+    <div class="modal-content">
+      <div id="modalIcon" class="text-4xl text-amber-400 mb-4">
+        <i class="fa-solid fa-heart-pulse"></i>
+      </div>
+      <h3 id="modalTitle" class="font-cinzel text-xl font-bold text-amber-300 mb-2">Aviso</h3>
+      <p id="modalMessage" class="text-text-soft text-sm mb-6 leading-relaxed">Mensagem aqui...</p>
+      <button onclick="closeModal()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-bg-dark font-bold px-6 py-2.5 rounded-full shadow-lg transition duration-300">
+        Entendido
+      </button>
+    </div>
+  </div>
+
+  <div class="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex-grow">
+    
+    <!-- CABEÇALHO -->
+    <header class="py-6 border-b border-amber-500/20 flex justify-between items-center">
+      <div class="font-cinzel text-lg sm:text-2xl font-bold tracking-[0.25em] text-white flex items-center gap-3">
+        <i class="fa-solid fa-feather-pointed text-amber-400 text-xl"></i>
+        AGATHA <span class="text-amber-400">MILLE</span>
+      </div>
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-text-soft">
+        <a href="#sinopse" class="hover:text-amber-300 transition">Sobre o Livro</a>
+        <a href="#jornada" class="hover:text-amber-300 transition">Os Três Amores</a>
+        <a href="#misterios" class="hover:text-amber-300 transition">Segredos</a>
+        <a href="#comentarios" class="hover:text-amber-300 transition">Mural</a>
+      </nav>
+      <a href="#comentarios" class="bg-gradient-to-r from-wine-accent to-wine-glow text-white px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold border border-amber-500/30 hover:border-amber-400 shadow-lg shadow-rose-950/50 hover:-translate-y-0.5 transition duration-300 flex items-center gap-2">
+        <i class="fa-regular fa-comment-dots"></i> Deixar Recado
+      </a>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section id="sinopse" class="py-12 sm:py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div class="flex flex-col gap-6 text-center lg:text-left">
+        <span class="inline-flex items-center gap-2 px-4 py-1.5 bg-wine-accent/50 border border-wine-glow/60 rounded-full text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 w-fit mx-auto lg:mx-0">
+          <i class="fa-solid fa-sparkles"></i> Lançamento Literário 2026
+        </span>
+        
+        <h1 class="font-cinzel text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight bg-gradient-to-b from-white via-text-soft to-text-muted bg-clip-text text-transparent">
+          O lugar onde eu nunca parti
+        </h1>
+
+        <p class="font-cinzel text-xl text-amber-400/90 tracking-wide">
+          Por Agatha Mille
+        </p>
+
+        <!-- PRÓLOGO -->
+        <div class="bg-wine-primary/70 border-l-4 border-rose-600 p-5 rounded-r-xl backdrop-blur-md text-left shadow-xl">
+          <div class="font-cinzel text-amber-300 text-sm font-bold flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-bookmark"></i> Prólogo
+          </div>
+          <p class="text-text-soft italic text-sm sm:text-base leading-relaxed">
+            "Helena Valença conta um pouco da sua história de amor. Tudo parece real, mas existe uma sensação constante de que algo está faltando."
+          </p>
+          <p class="mt-2 text-xs text-text-muted">
+            O enigma de Helena começa no silêncio da incerteza.
+          </p>
+        </div>
+
+        <!-- RELÓGIO -->
+        <div class="flex items-center justify-center lg:justify-start gap-3 bg-black/50 border border-rose-900/50 px-5 py-3 rounded-full w-fit mx-auto lg:mx-0 shadow-inner">
+          <i class="fa-regular fa-clock text-rose-500 animate-spin" style="animation-duration: 10s;"></i>
+          <span class="text-xs text-text-muted uppercase tracking-wider">Horário registrado:</span>
+          <span class="font-cinzel text-lg font-bold text-rose-400 tracking-widest">18:47</span>
+        </div>
+      </div>
+
+      <!-- CAPA 3D DO LIVRO -->
+      <div class="flex justify-center items-center book-3d-wrapper py-6">
+        <div class="book-cover-3d relative max-w-[320px] sm:max-w-[350px] w-full rounded-xl overflow-hidden border border-amber-500/30 bg-wine-primary">
+          <div class="book-spine"></div>
+          <!-- Imagem da capa com fallback robusto -->
+          <img src="img/aaaaa.png" 
+               alt="Capa do livro O lugar onde eu nunca parti" 
+               class="w-full h-auto block object-cover"
+               onerror="this.onerror=null; this.src='https://placehold.co/350x525/2b060d/d4af37?text=O+Lugar+Onde+Eu+Nunca+Parti';">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANSIOSOS / PRE-LAUNCH -->
+    <section class="bg-gradient-to-br from-wine-primary/90 via-bg-dark to-black border border-amber-500/20 rounded-3xl p-8 sm:p-12 text-center my-12 shadow-2xl relative overflow-hidden">
+      <div class="absolute -right-20 -bottom-20 w-60 h-60 bg-rose-950/30 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <h2 class="font-cinzel text-2xl sm:text-3xl lg:text-4xl font-bold text-amber-300 mb-4">
+        Ansiosos pelo lançamento?
+      </h2>
+      <p class="text-text-soft text-sm sm:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
+        O livro está em fase final de preparação. Demonstre sua expectativa para receber atualizações em primeira mão e apoiar a autora!
+      </p>
+      
+      <button onclick="registerHype()" class="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-bg-dark font-montserrat font-bold text-base px-8 py-4 rounded-full shadow-xl shadow-amber-950/50 hover:scale-105 active:scale-95 transition duration-300 flex items-center gap-3 mx-auto">
+        <i class="fa-solid fa-heart text-rose-900 animate-bounce"></i> Quero Ler no Lançamento!
+      </button>
+      
+      <div class="mt-6 text-sm text-text-muted flex items-center justify-center gap-2">
+        <i class="fa-solid fa-users text-amber-400/80"></i>
+        <span id="hype-count" class="font-bold text-white text-base">142</span> leitores já estão aguardando ansiosamente.
+      </div>
+    </section>
+
+    <!-- OS TRÊS AMORES DA HELENA -->
+    <section id="jornada" class="py-12">
+      <div class="text-center mb-12">
+        <span class="text-xs uppercase tracking-[0.3em] text-amber-400 font-semibold">Trilogia de Sentimentos</span>
+        <h2 class="font-cinzel text-3xl sm:text-4xl font-bold text-white mt-2">
+          A Jornada de <span class="text-amber-400">Helena Valença</span>
+        </h2>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- ÁGUA -->
+        <div class="bg-wine-primary/60 border border-rose-950/60 rounded-2xl p-8 backdrop-blur-md transition-all duration-300 hover:-translate-y-2 hover:border-cyan-400/50 hover:shadow-xl hover:shadow-cyan-950/20 group relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-cyan-400"></div>
+          <div class="text-3xl text-cyan-400 mb-4 group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-droplet"></i>
+          </div>
+          <span class="text-xs uppercase tracking-widest text-text-muted font-semibold">Parte I — Inocência</span>
+          <h3 class="font-cinzel text-xl font-bold text-white mt-1 mb-3">O Primeiro Amor (Água)</h3>
+          <p class="text-text-soft text-sm leading-relaxed">
+            Calmo, doce e paciente. O amor adolescente que ensina a amar, mas cujos caminhos inevitavelmente se distanciam com o tempo.
+          </p>
+          <div class="mt-6 pt-4 border-t border-white/10 text-xs italic text-cyan-300">
+            "Nem toda água salva quem está se afogando."
+          </div>
+        </div>
+
+        <!-- FOGO -->
+        <div class="bg-wine-primary/60 border border-rose-950/60 rounded-2xl p-8 backdrop-blur-md transition-all duration-300 hover:-translate-y-2 hover:border-rose-500/50 hover:shadow-xl hover:shadow-rose-950/30 group relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-rose-500"></div>
+          <div class="text-3xl text-rose-500 mb-4 group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-fire-flame-curved"></i>
+          </div>
+          <span class="text-xs uppercase tracking-widest text-text-muted font-semibold">Parte II — Intensidade</span>
+          <h3 class="font-cinzel text-xl font-bold text-white mt-1 mb-3">O Segundo Amor (Fogo)</h3>
+          <p class="text-text-soft text-sm leading-relaxed">
+            Apaixonante no início, mas devastador depois. Queima tudo ao redor, consumindo sonhos e a própria identidade de Helena.
+          </p>
+          <div class="mt-6 pt-4 border-t border-white/10 text-xs italic text-rose-300">
+            "Você só existe porque eu existo."
+          </div>
+        </div>
+
+        <!-- AR -->
+        <div class="bg-wine-primary/60 border border-rose-950/60 rounded-2xl p-8 backdrop-blur-md transition-all duration-300 hover:-translate-y-2 hover:border-purple-300/50 hover:shadow-xl hover:shadow-purple-950/20 group relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-purple-300"></div>
+          <div class="text-3xl text-purple-300 mb-4 group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-wind"></i>
+          </div>
+          <span class="text-xs uppercase tracking-widest text-text-muted font-semibold">Parte III — Recomeço</span>
+          <h3 class="font-cinzel text-xl font-bold text-white mt-1 mb-3">O Terceiro Amor (Ar)</h3>
+          <p class="text-text-soft text-sm leading-relaxed">
+            Leve e respeitoso. Alguém que parece conhecer Helena antes mesmo de ela falar e traz sopros genuínos de cura e liberdade.
+          </p>
+          <div class="mt-6 pt-4 border-t border-white/10 text-xs italic text-purple-200">
+            "Você precisa acordar."
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTOES INTERATIVOS (PISTAS & PLOT TWIST) -->
+    <section id="misterios" class="py-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div class="bg-gradient-to-br from-black/80 to-wine-primary/60 border border-dashed border-wine-glow/60 rounded-2xl p-8 text-center backdrop-blur-sm">
+        <h3 class="font-cinzel text-xl font-bold text-amber-300 mb-2">Segredos da História</h3>
+        <p class="text-text-muted text-sm mb-6">Deseja ler uma pista sobre o mistério central do livro?</p>
+        <button onclick="toggleReveal('pista-box')" class="border border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-bg-dark font-semibold px-6 py-2.5 rounded-full text-sm transition duration-300 shadow-lg">
+          Ler Pistas
+        </button>
+        <div id="pista-box" class="hidden mt-6 p-4 bg-wine-accent/30 border border-amber-500/30 rounded-xl text-sm font-medium text-white animate-[fadeIn_0.4s_ease]">
+          (Iai? Pista agora não, né? Kkkk Leia o livro para descobrir os enigmas de Helena!)
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-black/80 to-wine-primary/60 border border-dashed border-wine-glow/60 rounded-2xl p-8 text-center backdrop-blur-sm">
+        <h3 class="font-cinzel text-xl font-bold text-amber-300 mb-2">O Gran Finale</h3>
+        <p class="text-text-muted text-sm mb-6">Quer descobrir o grande segredo do final da história?</p>
+        <button onclick="toggleReveal('plot-box')" class="border border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-bg-dark font-semibold px-6 py-2.5 rounded-full text-sm transition duration-300 shadow-lg">
+          Revelar Plot Twist
+        </button>
+        <div id="plot-box" class="hidden mt-6 p-4 bg-wine-accent/30 border border-amber-500/30 rounded-xl text-sm font-medium text-white animate-[fadeIn_0.4s_ease]">
+          (Nada disso! O gran finale só revelando nas páginas finais... Hehe ❤️)
+        </div>
+      </div>
+    </section>
+
+    <!-- MURAL DE COMENTÁRIOS -->
+    <section id="comentarios" class="py-12">
+      <div class="bg-wine-primary/70 border border-rose-900/50 rounded-3xl p-8 sm:p-12 backdrop-blur-md shadow-2xl">
+        <div class="text-center mb-8">
+          <h2 class="font-cinzel text-3xl font-bold text-white">Mural de <span class="text-amber-400">Comentários</span></h2>
+          <p class="text-text-muted text-sm mt-2">Envie sua dúvida, carinho ou mensagem diretamente para a autora Agatha Mille!</p>
+        </div>
+
+        <form class="flex flex-col gap-5 mb-10 max-w-3xl mx-auto" id="commentForm" onsubmit="handleCommentSubmit(event)">
+          <div class="flex flex-col gap-2">
+            <label for="userName" class="text-sm font-medium text-text-soft">Seu Nome:</label>
+            <input type="text" id="userName" class="bg-bg-dark/90 border border-amber-500/30 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-400 transition" placeholder="Ex: Camila Rodrigues" required>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="userComment" class="text-sm font-medium text-text-soft">Seu Comentário ou Pergunta:</label>
+            <textarea id="userComment" class="bg-bg-dark/90 border border-amber-500/30 rounded-xl px-4 py-3 text-white text-sm min-h-[120px] resize-y focus:outline-none focus:border-amber-400 transition" placeholder="Escreva sua mensagem aqui..." required></textarea>
+          </div>
+          <div class="flex flex-wrap gap-4 pt-2">
+            <button type="submit" class="bg-gradient-to-r from-wine-accent to-wine-glow hover:brightness-110 text-white border border-amber-400/60 font-semibold px-6 py-3 rounded-full text-sm transition duration-300 shadow-lg flex items-center gap-2">
+              <i class="fa-solid fa-paper-plane"></i> Publicar no Mural
+            </button>
+            <button type="button" onclick="sendViaGmail()" class="bg-transparent hover:bg-amber-400/10 text-amber-400 border border-amber-400 font-semibold px-6 py-3 rounded-full text-sm transition duration-300 flex items-center gap-2">
+              <i class="fa-regular fa-envelope"></i> Enviar p/ Gmail da Autora
+            </button>
+          </div>
+        </form>
+
+        <div class="comments-list flex flex-col gap-4 max-h-[450px] overflow-y-auto pr-2 max-w-3xl mx-auto" id="commentsList">
+          <!-- Comentário inicial padrão -->
+          <div class="bg-bg-dark/60 border border-white/5 rounded-2xl p-5 backdrop-blur-sm">
+            <div class="flex justify-between items-center mb-2">
+              <span class="font-semibold text-amber-300 text-sm">Camila R.</span>
+              <span class="text-xs text-text-muted">Hoje</span>
+            </div>
+            <p class="text-text-soft text-sm leading-relaxed">
+              Ansiosa demais para ler a história da Helena Valença! O enredo está instigante desde o prólogo. ❤️
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REDES SOCIAIS DA AUTORA -->
+    <section class="py-12 text-center">
+      <h3 class="font-cinzel text-2xl font-bold text-amber-300 mb-2">Conecte-se com Agatha Mille</h3>
+      <p class="text-text-soft text-sm mb-8">Acompanhe o processo de escrita e bastidores do lançamento:</p>
+      
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="https://instagram.com/llmath._" target="_blank" rel="noopener noreferrer" class="bg-wine-primary/80 border border-amber-500/30 hover:border-amber-400 px-6 py-3 rounded-full text-sm font-medium flex items-center gap-3 transition duration-300 hover:-translate-y-1 shadow-lg">
+          <i class="fa-brands fa-instagram text-rose-500 text-lg"></i> Instagram: @llmath._
+        </a>
+        <a href="https://tiktok.com/@byb_b4t" target="_blank" rel="noopener noreferrer" class="bg-wine-primary/80 border border-amber-500/30 hover:border-amber-400 px-6 py-3 rounded-full text-sm font-medium flex items-center gap-3 transition duration-300 hover:-translate-y-1 shadow-lg">
+          <i class="fa-brands fa-tiktok text-white text-lg"></i> TikTok: @byb_b4t
+        </a>
+        <a href="mailto:agathamille@gmail.com" class="bg-wine-primary/80 border border-amber-500/30 hover:border-amber-400 px-6 py-3 rounded-full text-sm font-medium flex items-center gap-3 transition duration-300 hover:-translate-y-1 shadow-lg">
+          <i class="fa-regular fa-envelope text-amber-400 text-lg"></i> agathamille@gmail.com
+        </a>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- HOMENAGEM AO PROFESSOR -->
+  <section class="relative z-10 w-full bg-gradient-to-b from-wine-primary/40 to-bg-dark border-t border-amber-500/20 py-12 px-4 text-center mt-12">
+    <div class="max-w-4xl mx-auto">
+      <p class="font-cinzel text-base sm:text-lg text-text-soft leading-relaxed italic">
+        <i class="fa-solid fa-quote-left text-amber-400 mr-2"></i>
+        Agradeço imensamente ao meu professor <span class="text-amber-300 font-bold not-italic">Alan Bezerra</span>, que me inspirou e me deu toda a coragem necessária para escrever e dar vida a este livro.
+        <i class="fa-solid fa-quote-right text-amber-400 ml-2"></i>
+      </p>
+    </div>
+  </section>
+
+  <footer class="relative z-10 text-center py-6 text-xs text-text-muted border-t border-white/5">
+    <p>&copy; 2026 Agatha Mille — Todos os direitos reservados. "O lugar onde eu nunca parti".</p>
+  </footer>
+
+  <!-- SCRIPTS E INTERATIVIDADE -->
+  <script>
+    // Sistema de Modal customizado (substitui alert)
+    function showModal(title, message, iconClass = "fa-solid fa-heart-pulse") {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalMessage').innerText = message;
+      document.getElementById('modalIcon').innerHTML = `<i class="${iconClass}"></i>`;
+      document.getElementById('customModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('customModal').classList.remove('active');
+    }
+
+    // Toggle para Pistas e Plot Twist
+    function toggleReveal(id) {
+      const box = document.getElementById(id);
+      if (box.classList.contains('hidden')) {
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    // Contador de Leitores Ansiosos (Hype System)
+    let hypeCount = 142;
+    let registered = false;
+
+    function registerHype() {
+      if (!registered) {
+        hypeCount++;
+        document.getElementById('hype-count').innerText = hypeCount;
+        registered = true;
+        localStorage.setItem('agatha_hype_registered', 'true');
+        localStorage.setItem('agatha_hype_count', hypeCount);
+        showModal("Bem-vindo(a) à Lista!", "Obrigado pelo carinho! Você agora faz oficial parte da lista de leitores ansiosos pelo lançamento. ❤️", "fa-solid fa-heart text-rose-500");
+      } else {
+        showModal("Já registrado!", "Você já garantiu seu lugar na lista de leitores ansiosos para o lançamento! ❤️", "fa-solid fa-check-circle text-amber-400");
+      }
+    }
+
+    // Gerenciamento de Comentários & LocalStorage
+    function handleCommentSubmit(event) {
+      event.preventDefault();
+      const name = document.getElementById('userName').value.trim();
+      const comment = document.getElementById('userComment').value.trim();
+
+      if (name && comment) {
+        addCommentToUI(name, comment, "Agora mesmo");
+        
+        const savedComments = JSON.parse(localStorage.getItem('agatha_comments') || '[]');
+        savedComments.unshift({ name, comment, date: "Agora mesmo" });
+        localStorage.setItem('agatha_comments', JSON.stringify(savedComments));
+
+        document.getElementById('userName').value = '';
+        document.getElementById('userComment').value = '';
+        showModal("Comentário Publicado!", "Sua mensagem foi adicionada com sucesso ao mural da autora!", "fa-solid fa-paper-plane text-amber-400");
+      }
+    }
+
+    function addCommentToUI(name, comment, date) {
+      const commentsList = document.getElementById('commentsList');
+      const card = document.createElement('div');
+      card.className = 'bg-bg-dark/60 border border-white/5 rounded-2xl p-5 backdrop-blur-sm animate-[fadeIn_0.4s_ease]';
+      card.innerHTML = `
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-semibold text-amber-300 text-sm">${escapeHTML(name)}</span>
+          <span class="text-xs text-text-muted">${date}</span>
+        </div>
+        <p class="text-text-soft text-sm leading-relaxed">${escapeHTML(comment)}</p>
+      `;
+      commentsList.prepend(card);
+    }
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    function sendViaGmail() {
+      const name = document.getElementById('userName').value.trim();
+      const comment = document.getElementById('userComment').value.trim();
+
+      if (!name || !comment) {
+        showModal("Campos Vazios", "Por favor, preencha seu nome e sua mensagem no formulário antes de enviar para o Gmail!", "fa-solid fa-triangle-exclamation text-amber-400");
+        return;
+      }
+
+      const subject = encodeURIComponent(`Mensagem do Site - ${name}`);
+      const body = encodeURIComponent(`Nome: ${name}\n\nMensagem:\n${comment}`);
+      window.location.href = `mailto:agathamille@gmail.com?subject=${subject}&body=${body}`;
+    }
+
+    // Inicialização ao carregar a página
+    window.addEventListener('DOMContentLoaded', () => {
+      // Carregar comentários salvos
+      const savedComments = JSON.parse(localStorage.getItem('agatha_comments') || '[]');
+      savedComments.forEach(c => addCommentToUI(c.name, c.comment, c.date));
+
+      // Verificar estado do Hype
+      if (localStorage.getItem('agatha_hype_registered') === 'true') {
+        registered = true;
+        const storedCount = localStorage.getItem('agatha_hype_count');
+        if (storedCount) {
+          hypeCount = parseInt(storedCount);
+          document.getElementById('hype-count').innerText = hypeCount;
+        }
+      }
+    });
+
+    // Animação Otimizada de Brasas (Ember Particle Canvas)
+    const canvas = document.getElementById('ember-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const embers = [];
+    const emberCount = Math.floor(window.innerWidth / 30); // Responsivo baseado na tela
+
+    for (let i = 0; i < emberCount; i++) {
+      embers.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2.5 + 1,
+        speedY: Math.random() * 0.7 + 0.2,
+        speedX: (Math.random() - 0.5) * 0.4,
+        opacity: Math.random() * 0.7 + 0.3
+      });
+    }
+
+    function animateEmbers() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      embers.forEach(e => {
+        e.y -= e.speedY;
+        e.x += e.speedX;
+
+        if (e.y < -10) {
+          e.y = canvas.height + 10;
+          e.x = Math.random() * canvas.width;
+        }
+
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(212, 175, 55, ${e.opacity})`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#9e1b32";
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animateEmbers);
+    }
+    animateEmbers();
+  </script>
+</body>
+</html>
